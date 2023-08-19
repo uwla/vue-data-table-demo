@@ -8,7 +8,7 @@
         "lint": "vue-cli-service lint"
     },
     "dependencies": {
-        "@uwlajs/vue-data-table": "1.1.1",
+        "@uwlajs/vue-data-table": "^1.2.2",
         "bootstrap": "4.6.1",
         "bootstrap-vue": "2.23.1",
         "sweetalert2": "^11.6.13",
