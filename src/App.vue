@@ -2,8 +2,13 @@
     <main>
         <h1>VDT DEMO</h1>
 
-        <p>This is a sample dashboard using Vue Data Table. You can add, edit,
-            delete and view users.</p>
+        <p>
+            This is a sample dashboard using Vue Data Table.
+            You can add, edit, delete and view users.
+        </p>
+        <p>
+            There are three tables to showcase VDT's functionabilities.
+        </p>
 
         <b-button variant="success" @click="showCreateForm()">
             ADD USER
@@ -11,11 +16,18 @@
 
         <!-- TABLE 1 -->
         <h2>TABLE 1</h2>
+        <p>This table shows a generic dashboard.</p>
         <vue-data-table v-bind="params1" :data="data" @userEvent="handleUserEvent" />
 
         <!-- TABLE 2 -->
         <h2>TABLE 2</h2>
+        <p>This table allows editing cells.</p>
         <vue-data-table v-bind="params2" :data="data" @userEvent="handleUserEvent" />
+
+        <!-- TABLE 3 -->
+        <h2>TABLE 3</h2>
+        <p>This table shows lists and images.</p>
+        <vue-data-table v-bind="params3" :data="data" @userEvent="handleUserEvent" />
 
         <!-- MODAL DIALOG TO EDIT USERS -->
         <b-modal :title="title" ref="userForm" hide-footer>
@@ -45,10 +57,10 @@
         <!-- MODAL DIALOG TO VIEW USERS -->
         <b-modal :title="title" ref="userView" hide-footer>
             <div class="text-justify">
-                <b>Name:</b> <span>{{ user.name }}</span><br />
-                <b>Email:</b> <span>{{ user.email }}</span><br />
-                <b>Job:</b> <span>{{ user.job }}</span><br />
-                <b>Bio:</b> <span>{{ user.bio }}</span>
+                <b>Name</b>: <span>{{ user.name }}</span><br />
+                <b>Email</b>: <span>{{ user.email }}</span><br />
+                <b>Job</b>: <span>{{ user.job }}</span><br />
+                <b>Bio</b>: <span>{{ user.bio }}</span>
             </div>
         </b-modal>
     </main>
@@ -56,9 +68,12 @@
 
 <script>
 import users from './users.json'
+import CellList from './CellList.vue'
+import CellImage from './CellImage.vue'
 import Swal from 'sweetalert2'
 
 export default {
+    components: { CellList, CellImage },
     data() {
         return {
             // user which will be edited or added
@@ -70,25 +85,11 @@ export default {
 
             // parameters for the first table
             params1: {
+                defaultPerPage: 50,
                 sortingMode: 'single',
                 columns: [
                     { key: 'name' },
                     { key: 'email', title: 'Email address' },
-                    { key: 'job' },
-                    {
-                        cssClass: 'minwidth',
-                        component: 'vdt-actions',
-                        title: 'actions',
-                    },
-                ],
-            },
-
-            // parameters for the second table
-            params2: {
-                defaultPerPage: 50,
-                columns: [
-                    { key: 'name' },
-                    { key: 'gender' },
                     { key: 'job' },
                     {
                         cssClass: 'minwidth',
@@ -110,10 +111,56 @@ export default {
                     },
                 ],
             },
+
+            // parameters for the second table
+            params2: {
+                columns: [
+                    { key: 'name', editable: true, },
+                    { key: 'email', editable: true, },
+                    { key: 'job', editable: true, },
+                    {
+                        title: 'actions',
+                        cssClass: 'minwidth',
+                        component: 'vdt-actions',
+                        componentProps: { actions: ['view', 'delete']},
+                    },
+                ],
+            },
+
+            // parameters for the third table
+            params3: {
+                defaultPerPage: 25,
+                defaultColumn: {
+                    sortable: false,
+                },
+                columns: [
+                    { key: 'name' },
+                    {
+                        title: 'Top 3 Favorite fruits',
+                        component: CellList,
+                        searchFunction: (data, search) => {
+                            return data.fruits.some(f => f.toLowerCase().includes(search.toLowerCase()))
+                        },
+                        searchable: true,
+                    },
+                    {
+                        title: 'Image',
+                        component: CellImage,
+                        cssClass: "minwidth",
+                    }
+                ],
+            },
         }
     },
 
     methods: {
+        updateUserField(user, field, value) {
+            let ind = this.data.findIndex(u => u.id === user.id)
+            if (ind < 0) return
+            let newUser = {... this.data[ind]}
+            newUser[field] = value
+            this.data.splice(ind, 1, newUser)
+        },
         handleUserEvent(payload) {
             let user = payload.data
             switch (payload.action) {
@@ -126,6 +173,9 @@ export default {
                 case 'view':
                     this.showUser(user)
                     break
+                case 'updateCell':
+                    let { key, value } = payload
+                    this.updateUserField(user, key, value)
             }
         },
         addUser(user) {
